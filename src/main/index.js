@@ -205,6 +205,24 @@ function fullSnapshot() {
   };
 }
 
+function withProjectDb(handler) {
+  return (event, payload) => {
+    if (!activeDb || !activeId) throw new Error('Aucun projet actif. Ouvrez un projet.');
+    return handler(event, payload);
+  };
+}
+
+function handleIpc(channel, handler) {
+  ipcMain.handle(channel, async (event, payload) => {
+    try {
+      return await handler(event, payload);
+    } catch (error) {
+      console.error(`[ipc:${channel}]`, error);
+      throw (error instanceof Error) ? error : new Error('Erreur interne');
+    }
+  });
+}
+
 // ─────────────────────────────────────────────
 // IPC HANDLERS
 // ─────────────────────────────────────────────
