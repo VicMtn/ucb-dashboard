@@ -1,0 +1,35 @@
+{
+  "name": "peg2bul-dashboard",
+  "version": "1.0.0",
+  "description": "PEG2BUL — Gestion de projets Automation",
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
+  },
+  "build": {
+    "appId": "com.peg2bul.dashboard",
+    "productName": "PEG2BUL Dashboard",
+    "asar": true,
+    "files": ["src/**/*", "node_modules/**/*"],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  }
+}

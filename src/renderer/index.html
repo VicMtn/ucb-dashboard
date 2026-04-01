@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PEG2BUL Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+  <!-- ══ SCREEN: HOME (project list) ══ -->
+  <div id="screen-home" class="screen active">
+    <div class="home-bg"></div>
+    <div class="home-wrap">
+      <div class="home-header">
+        <div class="home-logo">
+          <div class="logo-badge-lg">AUT</div>
+          <div>
+            <div class="home-title">PEG2BUL Dashboard</div>
+            <div class="home-sub">Gestion de projets Automation</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="btn-new-project">+ Nouveau projet</button>
+      </div>
+
+      <div class="projects-grid" id="projects-grid">
+        <!-- populated by JS -->
+      </div>
+
+      <div class="home-footer">
+        <button class="link-btn" id="btn-open-data-folder">📂 Ouvrir le dossier de données</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: PROJECT DASHBOARD ══ -->
+  <div id="screen-project" class="screen">
+
+    <!-- Header -->
+    <div class="header" id="proj-header">
+      <div class="header-left">
+        <button class="back-btn" id="btn-back">← Projets</button>
+        <div class="header-divider"></div>
+        <div class="logo-badge">AUT</div>
+        <div>
+          <div class="header-title" id="proj-name">—</div>
+          <div class="header-sub" id="proj-lot">—</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="date-label" id="dateLabel"></span>
+        <div class="status-badge" id="status-badge">
+          <div class="status-dot"></div>
+          <span id="status-text">En cours</span>
+        </div>
+        <button class="icon-btn" id="btn-settings" title="Paramètres du projet">⚙</button>
+      </div>
+    </div>
+
+    <!-- Nav tabs -->
+    <div class="nav-tabs">
+      <div class="nav-tab active" data-tab="dashboard">📊 Tableau de bord</div>
+      <div class="nav-tab" data-tab="avancement">📈 Avancement</div>
+      <div class="nav-tab" data-tab="budget">💰 Budget</div>
+      <div class="nav-tab" data-tab="etapes">📅 Étapes</div>
+      <div class="nav-tab" data-tab="risques">⚠️ Risques</div>
+    </div>
+
+    <!-- Save bar -->
+    <div class="save-bar hidden" id="save-bar">
+      <span>✏️ Modifications non sauvegardées</span>
+      <button class="btn-save" id="btn-save">💾 Sauvegarder</button>
+    </div>
+
+    <!-- Tab views -->
+    <div id="tab-views">
+      <div class="tab-view active" id="view-dashboard"></div>
+      <div class="tab-view" id="view-avancement"></div>
+      <div class="tab-view" id="view-budget"></div>
+      <div class="tab-view" id="view-etapes"></div>
+      <div class="tab-view" id="view-risques"></div>
+    </div>
+
+  </div>
+
+  <!-- ══ MODAL: New / Edit Project ══ -->
+  <div class="modal-overlay hidden" id="modal-project">
+    <div class="modal">
+      <div class="modal-title" id="modal-project-title">Nouveau projet</div>
+      <div class="form-group">
+        <label class="form-label">Nom du projet *</label>
+        <input class="form-input" id="modal-proj-name" placeholder="ex. PEG2BUL · Automation" autofocus>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lot / Référence</label>
+        <input class="form-input" id="modal-proj-lot" placeholder="ex. Lot 411">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="modal-project-cancel">Annuler</button>
+        <button class="btn btn-primary" id="modal-project-confirm">Créer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL: Confirm delete ══ -->
+  <div class="modal-overlay hidden" id="modal-delete">
+    <div class="modal modal-sm">
+      <div class="modal-title" style="color:var(--red)">Supprimer le projet</div>
+      <p style="font-size:13px;color:var(--gray-600);margin-bottom:20px;" id="modal-delete-text"></p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="modal-delete-cancel">Annuler</button>
+        <button class="btn btn-danger" id="modal-delete-confirm">Supprimer définitivement</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TOAST ══ -->
+  <div class="toast" id="toast"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
