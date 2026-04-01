@@ -109,18 +109,22 @@ function esc(str) {
 // OPEN PROJECT
 // ─────────────────────────────────────────────
 async function openProject(id) {
-  const result = await window.api.projects.open(id);
-  state.activeProject = { id: result.id, name: result.name, lot: result.lot };
-  state.data = result.data;
-  clearDirty();
-  showScreen('screen-project');
-  renderProjectHeader();
-  renderDashboard();
-  renderAvancementForms();
-  renderBudgetView();
-  renderEtapesView();
-  renderRisquesView();
-  showTab('dashboard');
+  try {
+    const result = await window.api.projects.open(id);
+    state.activeProject = { id: result.id, name: result.name, lot: result.lot };
+    state.data = result.data;
+    clearDirty();
+    showScreen('screen-project');
+    renderProjectHeader();
+    renderDashboard();
+    renderAvancementForms();
+    renderBudgetView();
+    renderEtapesView();
+    renderRisquesView();
+    showTab('dashboard');
+  } catch (error) {
+    showErrorToast('Impossible d\'ouvrir le projet', error);
+  }
 }
 
 function renderProjectHeader() {
