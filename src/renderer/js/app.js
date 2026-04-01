@@ -751,9 +751,20 @@ async function confirmDelete() {
 // ── EVENT LISTENERS ──────────────────────────
 // ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('unhandledrejection', (event) => {
+    event.preventDefault();
+    showErrorToast('Erreur inattendue', event.reason);
+  });
+
   // Home
   $('btn-new-project').onclick    = openNewProjectModal;
-  $('btn-open-data-folder').onclick = () => window.api.shell.openDataFolder();
+  $('btn-open-data-folder').onclick = async () => {
+    try {
+      await window.api.shell.openDataFolder();
+    } catch (error) {
+      showErrorToast('Impossible d\'ouvrir le dossier de données', error);
+    }
+  };
 
   // Modal project
   $('modal-project-cancel').onclick  = () => $('modal-project').classList.add('hidden');
