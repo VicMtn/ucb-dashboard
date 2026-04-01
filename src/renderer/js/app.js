@@ -525,11 +525,15 @@ async function updateCR(i, field, value) {
   }
 }
 async function addCRRow() {
-  const n = state.data.cr.length + 1;
-  const row = await window.api.cr.add({ ref: `CRS-${String(n).padStart(3,'0')}`, statut: 'ouvert', description: '' });
-  state.data.cr.push(row);
-  renderCRRows();
-  renderDashboard();
+  try {
+    const n = state.data.cr.length + 1;
+    const row = await window.api.cr.add({ ref: `CRS-${String(n).padStart(3,'0')}`, statut: 'ouvert', description: '' });
+    state.data.cr.push(row);
+    renderCRRows();
+    renderDashboard();
+  } catch (error) {
+    showErrorToast('Impossible d\'ajouter un CR', error);
+  }
 }
 async function deleteCR(i) {
   await window.api.cr.delete(state.data.cr[i].id);
