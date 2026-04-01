@@ -191,6 +191,7 @@ function upsertTable(table, obj) {
   })();
 }
 function fullSnapshot() {
+  if (!activeDb) throw new Error('Aucun projet actif');
   return {
     kpi:           tableToObj('kpi'),
     avancement:    tableToObj('avancement'),
