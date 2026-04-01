@@ -228,9 +228,10 @@ function handleIpc(channel, handler) {
 // ─────────────────────────────────────────────
 
 // Projects
-ipcMain.handle('projects:list', () => readRegistry());
+handleIpc('projects:list', () => readRegistry());
 
-ipcMain.handle('projects:create', (_, { name, lot }) => {
+handleIpc('projects:create', (_, { name, lot }) => {
+  if (!name || typeof name !== 'string') throw new Error('Nom de projet invalide');
   const id = `proj_${Date.now()}`;
   const dbPath = path.join(PROJECTS_DIR, `${id}.db`);
   const db = openDb(dbPath);
@@ -245,7 +246,7 @@ ipcMain.handle('projects:create', (_, { name, lot }) => {
   return entry;
 });
 
-ipcMain.handle('projects:open', (_, { id }) => {
+handleIpc('projects:open', (_, { id }) => {
   const list = readRegistry();
   const entry = list.find(p => p.id === id);
   if (!entry) throw new Error('Projet introuvable');
@@ -254,7 +255,7 @@ ipcMain.handle('projects:open', (_, { id }) => {
   return { ...entry, data: fullSnapshot() };
 });
 
-ipcMain.handle('projects:delete', (_, { id }) => {
+handleIpc('projects:delete', (_, { id }) => {
   let list = readRegistry();
   const entry = list.find(p => p.id === id);
   if (!entry) return;
@@ -268,7 +269,8 @@ ipcMain.handle('projects:delete', (_, { id }) => {
   return { ok: true };
 });
 
-ipcMain.handle('projects:rename', (_, { id, name, lot }) => {
+handleIpc('projects:rename', (_, { id, name, lot }) => {
+  if (!name || typeof name !== 'string') throw new Error('Nom de projet invalide');
   const list = readRegistry();
   const entry = list.find(p => p.id === id);
   if (!entry) return;
@@ -283,74 +285,74 @@ ipcMain.handle('projects:rename', (_, { id, name, lot }) => {
 });
 
 // Data
-ipcMain.handle('data:get',    () => fullSnapshot());
-ipcMain.handle('data:patch',  (_, { table, payload }) => { upsertTable(table, payload); return { ok: true }; });
+handleIpc('data:get', withProjectDb(() => fullSnapshot()));
+handleIpc('data:patch', withProjectDb((_, { table, payload }) => { upsertTable(table, payload); return { ok: true }; }));
 
 // Budget CRUD
-ipcMain.handle('budget:add',    (_, r) => {
+handleIpc('budget:add', withProjectDb((_, r) => {
   const pos = (activeDb.prepare(`SELECT MAX(position) as m FROM budget`).get().m ?? -1) + 1;
   const info = activeDb.prepare(`INSERT INTO budget(categorie,budget_reel,utilise,position) VALUES(?,?,?,?)`).run(r.categorie, r.budget_reel??0, r.utilise??0, pos);
   return activeDb.prepare(`SELECT * FROM budget WHERE id=?`).get(info.lastInsertRowid);
-});
-ipcMain.handle('budget:update', (_, r) => {
+}));
+handleIpc('budget:update', withProjectDb((_, r) => {
   activeDb.prepare(`UPDATE budget SET categorie=?,budget_reel=?,utilise=? WHERE id=?`).run(r.categorie, r.budget_reel, r.utilise, r.id);
   return { ok: true };
-});
-ipcMain.handle('budget:delete', (_, { id }) => {
+}));
+handleIpc('budget:delete', withProjectDb((_, { id }) => {
   activeDb.prepare(`DELETE FROM budget WHERE id=?`).run(id);
   return { ok: true };
-});
+}));
 
 // CR CRUD
-ipcMain.handle('cr:add',    (_, r) => {
+handleIpc('cr:add', withProjectDb((_, r) => {
   const pos = (activeDb.prepare(`SELECT MAX(position) as m FROM change_requests`).get().m ?? -1) + 1;
   const info = activeDb.prepare(`INSERT INTO change_requests(ref,statut,description,position) VALUES(?,?,?,?)`).run(r.ref, r.statut??'ouvert', r.description??'', pos);
   return activeDb.prepare(`SELECT * FROM change_requests WHERE id=?`).get(info.lastInsertRowid);
-});
-ipcMain.handle('cr:update', (_, r) => {
+}));
+handleIpc('cr:update', withProjectDb((_, r) => {
   activeDb.prepare(`UPDATE change_requests SET ref=?,statut=?,description=? WHERE id=?`).run(r.ref, r.statut, r.description, r.id);
   return { ok: true };
-});
-ipcMain.handle('cr:delete', (_, { id }) => {
+}));
+handleIpc('cr:delete', withProjectDb((_, { id }) => {
   activeDb.prepare(`DELETE FROM change_requests WHERE id=?`).run(id);
   return { ok: true };
-});
+}));
 
 // Étapes CRUD
-ipcMain.handle('etapes:add',    (_, r) => {
+handleIpc('etapes:add', withProjectDb((_, r) => {
   const pos = (activeDb.prepare(`SELECT MAX(position) as m FROM etapes`).get().m ?? -1) + 1;
   const info = activeDb.prepare(`INSERT INTO etapes(titre,date_label,description,priorite,position) VALUES(?,?,?,?,?)`).run(r.titre, r.date_label??'', r.description??'', r.priorite??'dark', pos);
   return activeDb.prepare(`SELECT * FROM etapes WHERE id=?`).get(info.lastInsertRowid);
-});
-ipcMain.handle('etapes:update', (_, r) => {
+}));
+handleIpc('etapes:update', withProjectDb((_, r) => {
   activeDb.prepare(`UPDATE etapes SET titre=?,date_label=?,description=?,priorite=? WHERE id=?`).run(r.titre, r.date_label, r.description, r.priorite, r.id);
   return { ok: true };
-});
-ipcMain.handle('etapes:delete', (_, { id }) => {
+}));
+handleIpc('etapes:delete', withProjectDb((_, { id }) => {
   activeDb.prepare(`DELETE FROM etapes WHERE id=?`).run(id);
   return { ok: true };
-});
+}));
 
 // Risques CRUD
-ipcMain.handle('risques:add',    (_, r) => {
+handleIpc('risques:add', withProjectDb((_, r) => {
   const pos = (activeDb.prepare(`SELECT MAX(position) as m FROM risques`).get().m ?? -1) + 1;
   const info = activeDb.prepare(`INSERT INTO risques(risque,domaine,impact,position) VALUES(?,?,?,?)`).run(r.risque, r.domaine??'Technique', r.impact??'', pos);
   return activeDb.prepare(`SELECT * FROM risques WHERE id=?`).get(info.lastInsertRowid);
-});
-ipcMain.handle('risques:update', (_, r) => {
+}));
+handleIpc('risques:update', withProjectDb((_, r) => {
   activeDb.prepare(`UPDATE risques SET risque=?,domaine=?,impact=? WHERE id=?`).run(r.risque, r.domaine, r.impact, r.id);
   return { ok: true };
-});
-ipcMain.handle('risques:delete', (_, { id }) => {
+}));
+handleIpc('risques:delete', withProjectDb((_, { id }) => {
   activeDb.prepare(`DELETE FROM risques WHERE id=?`).run(id);
   return { ok: true };
-});
+}));
 
 // Meta
-ipcMain.handle('meta:update', (_, obj) => { upsertTable('meta', obj); return { ok: true }; });
+handleIpc('meta:update', withProjectDb((_, obj) => { upsertTable('meta', obj); return { ok: true }; }));
 
 // Utils
-ipcMain.handle('shell:openDataFolder', () => shell.openPath(USER_DATA));
+handleIpc('shell:openDataFolder', () => shell.openPath(USER_DATA));
 
 // ─────────────────────────────────────────────
 // WINDOW
