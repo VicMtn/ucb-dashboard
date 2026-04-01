@@ -736,11 +736,15 @@ function openDeleteModal(id) {
 }
 
 async function confirmDelete() {
-  await window.api.projects.delete(_deleteId);
-  $('modal-delete').classList.add('hidden');
-  state.projects = await window.api.projects.list();
-  renderProjectGrid();
-  showToast('Projet supprimé');
+  try {
+    await window.api.projects.delete(_deleteId);
+    $('modal-delete').classList.add('hidden');
+    state.projects = await window.api.projects.list();
+    renderProjectGrid();
+    showToast('Projet supprimé');
+  } catch (error) {
+    showErrorToast('Impossible de supprimer le projet', error);
+  }
 }
 
 // ─────────────────────────────────────────────
