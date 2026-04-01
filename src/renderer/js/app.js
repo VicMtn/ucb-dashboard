@@ -152,16 +152,20 @@ function showTab(name) {
 // SAVE
 // ─────────────────────────────────────────────
 async function saveAll() {
-  const d = state.data;
-  // Patch simple tables
-  await window.api.data.patch('kpi',           d.kpi);
-  await window.api.data.patch('avancement',    d.avancement);
-  await window.api.data.patch('technique',     d.technique);
-  await window.api.data.patch('documentation', d.documentation);
-  await window.api.meta.update(d.meta);
-  clearDirty();
-  renderDashboard();
-  showToast('Données sauvegardées');
+  try {
+    const d = state.data;
+    // Patch simple tables
+    await window.api.data.patch('kpi',           d.kpi);
+    await window.api.data.patch('avancement',    d.avancement);
+    await window.api.data.patch('technique',     d.technique);
+    await window.api.data.patch('documentation', d.documentation);
+    await window.api.meta.update(d.meta);
+    clearDirty();
+    renderDashboard();
+    showToast('Données sauvegardées');
+  } catch (error) {
+    showErrorToast('Échec de la sauvegarde', error);
+  }
 }
 
 // ─────────────────────────────────────────────
