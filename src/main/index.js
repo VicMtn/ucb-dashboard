@@ -106,6 +106,7 @@ class DB {
 // ─────────────────────────────────────────────
 let activeDb = null;   // current open DB
 let activeId = null;   // current project id
+const SIMPLE_KEY_VALUE_TABLES = new Set(['kpi', 'avancement', 'technique', 'documentation', 'meta']);
 
 function openDb(dbPath) {
   if (activeDb) { try { activeDb.close(); } catch {} }
@@ -172,6 +173,8 @@ function seedDb(db, projectName) {
 // HELPERS
 // ─────────────────────────────────────────────
 function tableToObj(table) {
+  if (!SIMPLE_KEY_VALUE_TABLES.has(table)) throw new Error(`Table non autorisée: ${table}`);
+  if (!activeDb) throw new Error('Aucun projet actif');
   return Object.fromEntries(
     activeDb.prepare(`SELECT key,value FROM ${table}`).all().map(r => [r.key, r.value])
   );
