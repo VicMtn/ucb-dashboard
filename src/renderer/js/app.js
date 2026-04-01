@@ -536,10 +536,14 @@ async function addCRRow() {
   }
 }
 async function deleteCR(i) {
-  await window.api.cr.delete(state.data.cr[i].id);
-  state.data.cr.splice(i, 1);
-  renderCRRows();
-  renderDashboard();
+  try {
+    await window.api.cr.delete(state.data.cr[i].id);
+    state.data.cr.splice(i, 1);
+    renderCRRows();
+    renderDashboard();
+  } catch (error) {
+    showErrorToast('Impossible de supprimer le CR', error);
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -579,21 +583,33 @@ function renderEtapesRows() {
 }
 
 async function updateEtape(i, field, value) {
-  state.data.etapes[i][field] = value;
-  await window.api.etapes.update(state.data.etapes[i]);
-  renderDashboard();
+  try {
+    state.data.etapes[i][field] = value;
+    await window.api.etapes.update(state.data.etapes[i]);
+    renderDashboard();
+  } catch (error) {
+    showErrorToast('Impossible de mettre à jour l\'étape', error);
+  }
 }
 async function addEtapeRow() {
-  const row = await window.api.etapes.add({ titre: 'Nouvelle étape', date_label: '', description: '', priorite: 'dark' });
-  state.data.etapes.push(row);
-  renderEtapesRows();
-  renderDashboard();
+  try {
+    const row = await window.api.etapes.add({ titre: 'Nouvelle étape', date_label: '', description: '', priorite: 'dark' });
+    state.data.etapes.push(row);
+    renderEtapesRows();
+    renderDashboard();
+  } catch (error) {
+    showErrorToast('Impossible d\'ajouter une étape', error);
+  }
 }
 async function deleteEtape(i) {
-  await window.api.etapes.delete(state.data.etapes[i].id);
-  state.data.etapes.splice(i, 1);
-  renderEtapesRows();
-  renderDashboard();
+  try {
+    await window.api.etapes.delete(state.data.etapes[i].id);
+    state.data.etapes.splice(i, 1);
+    renderEtapesRows();
+    renderDashboard();
+  } catch (error) {
+    showErrorToast('Impossible de supprimer l\'étape', error);
+  }
 }
 
 // ─────────────────────────────────────────────
