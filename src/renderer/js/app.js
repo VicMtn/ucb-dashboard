@@ -469,10 +469,14 @@ function renderBudgetRows() {
 }
 
 async function updateBudget(i, field, value) {
-  state.data.budget[i][field] = value;
-  await window.api.budget.update(state.data.budget[i]);
-  renderDashboard();
-  showToast('Budget mis à jour');
+  try {
+    state.data.budget[i][field] = value;
+    await window.api.budget.update(state.data.budget[i]);
+    renderDashboard();
+    showToast('Budget mis à jour');
+  } catch (error) {
+    showErrorToast('Impossible de mettre à jour le budget', error);
+  }
 }
 async function addBudgetRow() {
   const row = await window.api.budget.add({ categorie: 'Nouvelle catégorie', budget_reel: 0, utilise: 0 });
