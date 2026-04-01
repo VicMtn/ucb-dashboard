@@ -516,9 +516,13 @@ function renderCRRows() {
 }
 
 async function updateCR(i, field, value) {
-  state.data.cr[i][field] = value;
-  await window.api.cr.update(state.data.cr[i]);
-  renderDashboard();
+  try {
+    state.data.cr[i][field] = value;
+    await window.api.cr.update(state.data.cr[i]);
+    renderDashboard();
+  } catch (error) {
+    showErrorToast('Impossible de mettre à jour le CR', error);
+  }
 }
 async function addCRRow() {
   const n = state.data.cr.length + 1;
