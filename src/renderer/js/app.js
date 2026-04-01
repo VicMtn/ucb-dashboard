@@ -59,12 +59,16 @@ function showScreen(id) {
 // HOME SCREEN
 // ─────────────────────────────────────────────
 async function loadHome() {
-  showScreen('screen-home');
-  state.activeProject = null;
-  state.data = null;
-  clearDirty();
-  state.projects = await window.api.projects.list();
-  renderProjectGrid();
+  try {
+    showScreen('screen-home');
+    state.activeProject = null;
+    state.data = null;
+    clearDirty();
+    state.projects = await window.api.projects.list();
+    renderProjectGrid();
+  } catch (error) {
+    showErrorToast('Impossible de charger la liste des projets', error);
+  }
 }
 
 function renderProjectGrid() {
