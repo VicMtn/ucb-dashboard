@@ -180,6 +180,9 @@ function tableToObj(table) {
   );
 }
 function upsertTable(table, obj) {
+  if (!SIMPLE_KEY_VALUE_TABLES.has(table)) throw new Error(`Table non autorisée: ${table}`);
+  if (!activeDb) throw new Error('Aucun projet actif');
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) throw new Error('Payload invalide');
   const stmt = activeDb.prepare(
     `INSERT INTO ${table}(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value`
   );
