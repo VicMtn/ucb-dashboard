@@ -704,22 +704,26 @@ function openRenameModal(id) {
 }
 
 async function confirmProjectModal() {
-  const name = $('modal-proj-name').value.trim();
-  const lot  = $('modal-proj-lot').value.trim();
-  if (!name) { $('modal-proj-name').focus(); return; }
-  $('modal-project').classList.add('hidden');
+  try {
+    const name = $('modal-proj-name').value.trim();
+    const lot  = $('modal-proj-lot').value.trim();
+    if (!name) { $('modal-proj-name').focus(); return; }
+    $('modal-project').classList.add('hidden');
 
-  if (_editProjectId) {
-    await window.api.projects.rename(_editProjectId, name, lot);
-    state.projects = await window.api.projects.list();
-    renderProjectGrid();
-    showToast('Projet renommé');
-  } else {
-    const proj = await window.api.projects.create(name, lot);
-    state.projects.push(proj);
-    renderProjectGrid();
-    showToast('Projet créé');
-    await openProject(proj.id);
+    if (_editProjectId) {
+      await window.api.projects.rename(_editProjectId, name, lot);
+      state.projects = await window.api.projects.list();
+      renderProjectGrid();
+      showToast('Projet renommé');
+    } else {
+      const proj = await window.api.projects.create(name, lot);
+      state.projects.push(proj);
+      renderProjectGrid();
+      showToast('Projet créé');
+      await openProject(proj.id);
+    }
+  } catch (error) {
+    showErrorToast('Impossible d\'enregistrer le projet', error);
   }
 }
 
