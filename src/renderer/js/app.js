@@ -489,10 +489,14 @@ async function addBudgetRow() {
   }
 }
 async function deleteBudget(i) {
-  await window.api.budget.delete(state.data.budget[i].id);
-  state.data.budget.splice(i, 1);
-  renderBudgetRows();
-  renderDashboard();
+  try {
+    await window.api.budget.delete(state.data.budget[i].id);
+    state.data.budget.splice(i, 1);
+    renderBudgetRows();
+    renderDashboard();
+  } catch (error) {
+    showErrorToast('Impossible de supprimer la catégorie budget', error);
+  }
 }
 
 function renderCRRows() {
