@@ -3,6 +3,12 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs   = require('fs');
+const {
+  fullSnapshot: getFullSnapshot,
+  openDb: openDbCore,
+  seedDb,
+  upsertTable: upsertDbTable,
+} = require('./db-core');
 
 const isDev = process.argv.includes('--dev');
 
@@ -42,167 +48,16 @@ function writeRegistry(list) {
 }
 
 // ─────────────────────────────────────────────
-// SHIM  node:sqlite  →  better-sqlite3-compatible API
-//
-// node:sqlite stmt.all() returns { columns: string[], rows: unknown[][] }
-// We reshape to [{ col: val, ... }] to match better-sqlite3's row objects.
-// ─────────────────────────────────────────────
-const { DatabaseSync } = require('node:sqlite');
-
-class DB {
-  constructor(dbPath) {
-    this._db = new DatabaseSync(dbPath);
-    this._db.exec('PRAGMA journal_mode = WAL');
-    this._db.exec('PRAGMA foreign_keys = ON');
-  }
-
-  // Returns a statement-like object with .all(), .get(), .run()
-  prepare(sql) {
-    const raw = this._db.prepare(sql);
-
-    // node:sqlite return format varies by Electron/Node version:
-    //   Format A: plain array of objects  [{ col: val }, ...]  (newer default)
-    //   Format B: { columns: string[], rows: unknown[][] }     (expanded / older)
-    const normalize = (result) => {
-      if (!result) return [];
-      if (Array.isArray(result)) return result;                   // Format A
-      if (result.columns && Array.isArray(result.rows)) {        // Format B
-        return result.rows.map(row =>
-          Object.fromEntries(result.columns.map((c, i) => [c, row[i]]))
-        );
-      }
-      return [];
-    };
-
-    return {
-      all: (...params) => normalize(raw.all(...params)),
-      get: (...params) => { const r = normalize(raw.all(...params)); return r[0] ?? undefined; },
-      run: (...params) => raw.run(...params),  // → { lastInsertRowid, changes }
-    };
-  }
-
-  exec(sql)   { this._db.exec(sql); }
-
-  // Minimal transaction shim — executes fn synchronously inside BEGIN/COMMIT
-  transaction(fn) {
-    return (...args) => {
-      this._db.exec('BEGIN');
-      try {
-        const result = fn(...args);
-        this._db.exec('COMMIT');
-        return result;
-      } catch (e) {
-        this._db.exec('ROLLBACK');
-        throw e;
-      }
-    };
-  }
-
-  close() { this._db.close(); }
-}
-
-// ─────────────────────────────────────────────
 // SQLITE  (one DB instance per project)
 // ─────────────────────────────────────────────
 let activeDb = null;   // current open DB
 let activeId = null;   // current project id
-const SIMPLE_KEY_VALUE_TABLES = new Set(['kpi', 'avancement', 'technique', 'documentation', 'meta']);
 
 function openDb(dbPath) {
   if (activeDb) { try { activeDb.close(); } catch {} }
-  const db = new DB(dbPath);
-  initSchema(db);
+  const db = openDbCore(dbPath);
   activeDb = db;
   return db;
-}
-
-function initSchema(db) {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS kpi (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-    CREATE TABLE IF NOT EXISTS avancement (key TEXT PRIMARY KEY, value REAL NOT NULL);
-    CREATE TABLE IF NOT EXISTS technique (key TEXT PRIMARY KEY, value REAL NOT NULL);
-    CREATE TABLE IF NOT EXISTS documentation (key TEXT PRIMARY KEY, value REAL NOT NULL);
-    CREATE TABLE IF NOT EXISTS budget (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      categorie TEXT NOT NULL, budget_reel REAL NOT NULL DEFAULT 0,
-      utilise REAL NOT NULL DEFAULT 0, position INTEGER NOT NULL DEFAULT 0
-    );
-    CREATE TABLE IF NOT EXISTS change_requests (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      ref TEXT NOT NULL, statut TEXT NOT NULL DEFAULT 'ouvert',
-      description TEXT NOT NULL DEFAULT '', position INTEGER NOT NULL DEFAULT 0
-    );
-    CREATE TABLE IF NOT EXISTS etapes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      titre TEXT NOT NULL, date_label TEXT NOT NULL DEFAULT '',
-      description TEXT NOT NULL DEFAULT '', priorite TEXT NOT NULL DEFAULT 'dark',
-      position INTEGER NOT NULL DEFAULT 0
-    );
-    CREATE TABLE IF NOT EXISTS risques (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      risque TEXT NOT NULL, domaine TEXT NOT NULL DEFAULT 'Technique',
-      impact TEXT NOT NULL DEFAULT '', position INTEGER NOT NULL DEFAULT 0
-    );
-    CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-  `);
-}
-
-function seedDb(db, projectName) {
-  const upsertKpi  = db.prepare(`INSERT OR IGNORE INTO kpi(key,value) VALUES(?,?)`);
-  const upsertAv   = db.prepare(`INSERT OR IGNORE INTO avancement(key,value) VALUES(?,?)`);
-  const upsertTech = db.prepare(`INSERT OR IGNORE INTO technique(key,value) VALUES(?,?)`);
-  const upsertDoc  = db.prepare(`INSERT OR IGNORE INTO documentation(key,value) VALUES(?,?)`);
-  const upsertMeta = db.prepare(`INSERT OR IGNORE INTO meta(key,value) VALUES(?,?)`);
-
-  db.transaction(() => {
-    for (const [k,v] of Object.entries({ docs:'0', docsRef:'', io:'0', ioDelta:'0', fs:'0', fsInit:'0', jalPaid:'0', jalTotal:'0' }))
-      upsertKpi.run(k, v);
-    for (const [k,v] of Object.entries({ finance:0, doc:0, auto:0 }))
-      upsertAv.run(k, v);
-    for (const [k,v] of Object.entries({ prog:0, sup:0, batch:0, batchProg:0, batchTotal:0, batchPrete:0 }))
-      upsertTech.run(k, v);
-    for (const [k,v] of Object.entries({ appro:0, revue:0, attente:0, nouvelles:0 }))
-      upsertDoc.run(k, v);
-    upsertMeta.run('statut', 'En cours');
-    upsertMeta.run('nom', projectName);
-    upsertMeta.run('lot', '');
-  })();
-}
-
-// ─────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────
-function tableToObj(table) {
-  if (!SIMPLE_KEY_VALUE_TABLES.has(table)) throw new Error(`Table non autorisée: ${table}`);
-  if (!activeDb) throw new Error('Aucun projet actif');
-  return Object.fromEntries(
-    activeDb.prepare(`SELECT key,value FROM ${table}`).all().map(r => [r.key, r.value])
-  );
-}
-function upsertTable(table, obj) {
-  if (!SIMPLE_KEY_VALUE_TABLES.has(table)) throw new Error(`Table non autorisée: ${table}`);
-  if (!activeDb) throw new Error('Aucun projet actif');
-  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) throw new Error('Payload invalide');
-  const stmt = activeDb.prepare(
-    `INSERT INTO ${table}(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value`
-  );
-  activeDb.transaction(() => {
-    for (const [k,v] of Object.entries(obj)) stmt.run(k, String(v));
-  })();
-}
-function fullSnapshot() {
-  if (!activeDb) throw new Error('Aucun projet actif');
-  return {
-    kpi:           tableToObj('kpi'),
-    avancement:    tableToObj('avancement'),
-    technique:     tableToObj('technique'),
-    documentation: tableToObj('documentation'),
-    budget:        activeDb.prepare(`SELECT * FROM budget ORDER BY position`).all(),
-    cr:            activeDb.prepare(`SELECT * FROM change_requests ORDER BY position`).all(),
-    etapes:        activeDb.prepare(`SELECT * FROM etapes ORDER BY position`).all(),
-    risques:       activeDb.prepare(`SELECT * FROM risques ORDER BY position`).all(),
-    meta:          tableToObj('meta'),
-  };
 }
 
 function withProjectDb(handler) {
@@ -252,7 +107,7 @@ handleIpc('projects:open', (_, { id }) => {
   if (!entry) throw new Error('Projet introuvable');
   openDb(entry.dbPath);
   activeId = id;
-  return { ...entry, data: fullSnapshot() };
+  return { ...entry, data: getFullSnapshot(activeDb) };
 });
 
 handleIpc('projects:delete', (_, { id }) => {
@@ -285,8 +140,8 @@ handleIpc('projects:rename', (_, { id, name, lot }) => {
 });
 
 // Data
-handleIpc('data:get', withProjectDb(() => fullSnapshot()));
-handleIpc('data:patch', withProjectDb((_, { table, payload }) => { upsertTable(table, payload); return { ok: true }; }));
+handleIpc('data:get', withProjectDb(() => getFullSnapshot(activeDb)));
+handleIpc('data:patch', withProjectDb((_, { table, payload }) => { upsertDbTable(activeDb, table, payload); return { ok: true }; }));
 
 // Budget CRUD
 handleIpc('budget:add', withProjectDb((_, r) => {
@@ -349,7 +204,7 @@ handleIpc('risques:delete', withProjectDb((_, { id }) => {
 }));
 
 // Meta
-handleIpc('meta:update', withProjectDb((_, obj) => { upsertTable('meta', obj); return { ok: true }; }));
+handleIpc('meta:update', withProjectDb((_, obj) => { upsertDbTable(activeDb, 'meta', obj); return { ok: true }; }));
 
 // Utils
 handleIpc('shell:openDataFolder', () => shell.openPath(USER_DATA));
