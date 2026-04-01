@@ -647,21 +647,33 @@ function renderRisquesRows() {
 }
 
 async function updateRisque(i, field, value) {
-  state.data.risques[i][field] = value;
-  await window.api.risques.update(state.data.risques[i]);
-  renderDashboard();
+  try {
+    state.data.risques[i][field] = value;
+    await window.api.risques.update(state.data.risques[i]);
+    renderDashboard();
+  } catch (error) {
+    showErrorToast('Impossible de mettre à jour le risque', error);
+  }
 }
 async function addRisqueRow() {
-  const row = await window.api.risques.add({ risque: 'Nouveau risque', domaine: 'Technique', impact: '' });
-  state.data.risques.push(row);
-  renderRisquesRows();
-  renderDashboard();
+  try {
+    const row = await window.api.risques.add({ risque: 'Nouveau risque', domaine: 'Technique', impact: '' });
+    state.data.risques.push(row);
+    renderRisquesRows();
+    renderDashboard();
+  } catch (error) {
+    showErrorToast('Impossible d\'ajouter un risque', error);
+  }
 }
 async function deleteRisque(i) {
-  await window.api.risques.delete(state.data.risques[i].id);
-  state.data.risques.splice(i, 1);
-  renderRisquesRows();
-  renderDashboard();
+  try {
+    await window.api.risques.delete(state.data.risques[i].id);
+    state.data.risques.splice(i, 1);
+    renderRisquesRows();
+    renderDashboard();
+  } catch (error) {
+    showErrorToast('Impossible de supprimer le risque', error);
+  }
 }
 
 // ─────────────────────────────────────────────
