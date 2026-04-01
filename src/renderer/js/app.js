@@ -25,6 +25,18 @@ function showToast(msg, kind = 'success') {
   showToast._t = setTimeout(() => t.classList.remove('show'), 2800);
 }
 
+function errMsg(error) {
+  if (!error) return 'Erreur inconnue';
+  if (typeof error === 'string') return error;
+  return error.message || 'Erreur inconnue';
+}
+
+function showErrorToast(message, error) {
+  console.error(message, error);
+  const details = error ? `: ${errMsg(error)}` : '';
+  showToast(`${message}${details}`, 'error');
+}
+
 function markDirty() {
   state.dirty = true;
   $('save-bar').classList.remove('hidden');
