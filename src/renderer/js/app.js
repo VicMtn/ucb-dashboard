@@ -17,9 +17,9 @@ let state = {
 const $ = id => document.getElementById(id);
 const fmt = n => Number(n).toLocaleString('fr-CH');
 
-function showToast(msg) {
+function showToast(msg, kind = 'success') {
   const t = $('toast');
-  t.textContent = '✅ ' + msg;
+  t.textContent = (kind === 'error' ? '❌ ' : '✅ ') + msg;
   t.classList.add('show');
   clearTimeout(showToast._t);
   showToast._t = setTimeout(() => t.classList.remove('show'), 2800);
