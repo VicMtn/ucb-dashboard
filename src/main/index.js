@@ -15,10 +15,27 @@ if (!fs.existsSync(PROJECTS_DIR)) fs.mkdirSync(PROJECTS_DIR, { recursive: true }
 
 // Registry: maps projectId → { name, dbPath, createdAt }
 const REGISTRY_FILE = path.join(USER_DATA, 'projects.json');
+const REGISTRY_REQUIRED_FIELDS = ['id', 'name', 'dbPath', 'createdAt'];
 function readRegistry() {
   if (!fs.existsSync(REGISTRY_FILE)) return [];
-  try { return JSON.parse(fs.readFileSync(REGISTRY_FILE, 'utf8')); }
-  catch { return []; }
+  try {
+    const parsed = JSON.parse(fs.readFileSync(REGISTRY_FILE, 'utf8'));
+    if (!Array.isArray(parsed)) {
+      console.error('[registry] Format invalide: tableau attendu');
+      return [];
+    }
+    const valid = parsed.filter(entry => {
+      if (!entry || typeof entry !== 'object') return false;
+      return REGISTRY_REQUIRED_FIELDS.every(f => typeof entry[f] === 'string');
+    });
+    if (valid.length !== parsed.length) {
+      console.error(`[registry] ${parsed.length - valid.length} entrées invalides ignorées`);
+    }
+    return valid;
+  } catch (error) {
+    console.error('[registry] Impossible de lire projects.json', error);
+    return [];
+  }
 }
 function writeRegistry(list) {
   fs.writeFileSync(REGISTRY_FILE, JSON.stringify(list, null, 2), 'utf8');
