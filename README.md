@@ -13,9 +13,8 @@ Application desktop de gestion de projets Automation — client lourd Electron +
 | Build | electron-builder (NSIS / DMG / AppImage) |
 
 > **Pourquoi `node:sqlite` ?**  
-> `better-sqlite3` nécessite une compilation native (node-gyp) incompatible avec Node 24 / Xcode récent.  
-> `node:sqlite` est intégré à Node 22+ — pas de `npm install`, pas de binaires, pas de recompilation.  
-> Un shim dans `src/main/index.js` expose la même API (`.prepare().all/get/run`, `.transaction()`).
+> `node:sqlite` est intégré à Node 22+ (embarqué avec Electron) et évite les dépendances natives à compiler.  
+> Un shim dans `src/main/index.js` expose une API proche de `better-sqlite3` (`.prepare().all/get/run`, `.transaction()`).
 
 ## Données
 
@@ -33,8 +32,8 @@ Un fichier `projects.json` dans ce même dossier sert de registry (liste des pro
 
 ```bash
 npm install
-npm start          # lancement dev
-npm run dev        # avec --watch (node hot-reload)
+npm start          # lancement de l'application
+npm run dev        # lancement avec DevTools
 ```
 
 ## Build distributable
@@ -45,13 +44,7 @@ npm run build:mac    # → dist/*.dmg
 npm run build:linux  # → dist/*.AppImage
 ```
 
-> **Prérequis build Windows** : les binaires natifs `better-sqlite3` doivent être recompilés pour Electron.
-> Ajouter dans `package.json` → `build` :
-> ```json
-> "npmRebuild": true,
-> "nodeGypRebuild": false
-> ```
-> et lancer `npx electron-rebuild` avant de builder.
+> Le projet utilise `node:sqlite` natif. Aucun `electron-rebuild` n'est requis pour la couche de persistance.
 
 ## Structure des fichiers
 
@@ -77,7 +70,7 @@ Renderer (window.api.xxx)
     ↕  contextBridge (preload)
 Main process (ipcMain.handle)
     ↕
-better-sqlite3 (.db fichier)
+SQLite via node:sqlite (.db fichier)
 ```
 
 Aucun accès direct à Node depuis le renderer — tout passe par le preload (`contextIsolation: true`).
