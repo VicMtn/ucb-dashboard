@@ -34,6 +34,7 @@ Un fichier `projects.json` dans ce même dossier sert de registry (liste des pro
 npm install
 npm start          # lancement de l'application
 npm run dev        # lancement avec DevTools
+npm test           # tests Node (migrations / seed DB)
 ```
 
 ## Build distributable
@@ -74,6 +75,12 @@ SQLite via node:sqlite (.db fichier)
 ```
 
 Aucun accès direct à Node depuis le renderer — tout passe par le preload (`contextIsolation: true`).
+
+## Schéma & migrations
+
+- Le schéma est versionné via la table `schema_version`.
+- Les migrations s'appliquent automatiquement à l'ouverture de chaque base projet.
+- Le moteur de migration est centralisé dans `src/main/db-core.js`.
 
 ## Multi-projets
 
