@@ -479,10 +479,14 @@ async function updateBudget(i, field, value) {
   }
 }
 async function addBudgetRow() {
-  const row = await window.api.budget.add({ categorie: 'Nouvelle catégorie', budget_reel: 0, utilise: 0 });
-  state.data.budget.push(row);
-  renderBudgetRows();
-  renderDashboard();
+  try {
+    const row = await window.api.budget.add({ categorie: 'Nouvelle catégorie', budget_reel: 0, utilise: 0 });
+    state.data.budget.push(row);
+    renderBudgetRows();
+    renderDashboard();
+  } catch (error) {
+    showErrorToast('Impossible d\'ajouter une catégorie budget', error);
+  }
 }
 async function deleteBudget(i) {
   await window.api.budget.delete(state.data.budget[i].id);
