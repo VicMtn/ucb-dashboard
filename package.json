@@ -14,7 +14,10 @@
     "appId": "com.peg2bul.dashboard",
     "productName": "PEG2BUL Dashboard",
     "asar": true,
-    "files": ["src/**/*", "node_modules/**/*"],
+    "files": [
+      "src/**/*",
+      "node_modules/**/*"
+    ],
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"
@@ -27,9 +30,8 @@
       "target": "AppImage"
     }
   },
-  "dependencies": {},
   "devDependencies": {
-    "electron": "^33.0.0",
-    "electron-builder": "^25.1.8"
+    "electron": "^41.1.1",
+    "electron-builder": "^26.8.1"
   }
 }
