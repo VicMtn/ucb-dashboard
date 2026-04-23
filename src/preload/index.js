@@ -56,5 +56,10 @@ contextBridge.exposeInMainWorld('api', {
   // ── Utils ─────────────────────────────────
   shell: {
     openDataFolder: () => ipcRenderer.invoke('shell:openDataFolder'),
+    openLogsFolder: () => ipcRenderer.invoke('shell:openLogsFolder'),
+  },
+
+  updater: {
+    check: () => ipcRenderer.invoke('updater:check'),
   }
 });
