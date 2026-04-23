@@ -6,11 +6,13 @@ Application desktop de gestion de projets Automation — client lourd Electron +
 
 | Couche | Technologie |
 |--------|------------|
-| Desktop shell | Electron 33 (Node 22 embarqué) |
+| Desktop shell | Electron 41 |
 | Persistance | `node:sqlite` natif — zéro dépendance native, zéro compilation |
 | IPC | contextBridge (sécurisé, contextIsolation=true) |
 | UI | HTML/CSS/JS vanilla (aucun framework) |
 | Build | electron-builder (NSIS / DMG / AppImage) |
+| Observabilité | `electron-log` (fichier + console) |
+| Mises à jour | `electron-updater` (mode packagé, non disponible en dev) | 
 
 > **Pourquoi `node:sqlite` ?**  
 > `node:sqlite` est intégré à Node 22+ (embarqué avec Electron) et évite les dépendances natives à compiler.  
@@ -81,6 +83,16 @@ Aucun accès direct à Node depuis le renderer — tout passe par le preload (`c
 - Le schéma est versionné via la table `schema_version`.
 - Les migrations s'appliquent automatiquement à l'ouverture de chaque base projet.
 - Le moteur de migration est centralisé dans `src/main/db-core.js`.
+
+## Exploitation (P2)
+
+- Logs applicatifs persistants dans le dossier logs Electron (`electron-log`).
+- Gestion centralisée des crashs (`uncaughtException`, `unhandledRejection`, `render-process-gone`, `child-process-gone`).
+- Vérification des mises à jour activée en mode packagé (`electron-updater`), avec bouton manuel côté interface.
+- Outils support disponibles sur l'écran d'accueil:
+  - `Ouvrir le dossier de données`
+  - `Ouvrir les logs`
+  - `Vérifier les mises à jour`
 
 ## Multi-projets
 
