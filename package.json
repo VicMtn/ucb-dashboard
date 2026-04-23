@@ -1,7 +1,7 @@
 {
   "name": "peg2bul-dashboard",
   "version": "1.0.0",
-  "description": "PEG2BUL — Gestion de projets Automation",
+  "description": "Gestion de projets Automation",
   "main": "src/main/index.js",
   "scripts": {
     "start": "electron .",
@@ -14,8 +14,8 @@
     "build:linux": "electron-builder --linux"
   },
   "build": {
-    "appId": "com.peg2bul.dashboard",
-    "productName": "PEG2BUL Dashboard",
+    "appId": "com.ucb-automation.dashboard",
+    "productName": "UCB-Automation Dashboard",
     "asar": true,
     "files": [
       "src/**/*",
