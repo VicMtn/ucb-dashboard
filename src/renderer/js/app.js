@@ -106,6 +106,12 @@ function renderProjectGrid() {
         </div>
       </div>
       <div class="project-card-date">Créé le ${new Date(p.createdAt).toLocaleDateString("fr-CH")}</div>
+      <div class="project-card-progress" title="Avancement global">
+        <div class="progress-mini">
+          <div class="progress-mini-fill" style="width:${Math.max(0, Math.min(100, Number(p.progressPct ?? 0)))}%"></div>
+        </div>
+        <div class="progress-mini-label">${Number.isFinite(Number(p.progressPct)) ? `${Math.round(Number(p.progressPct))}%` : "—"}</div>
+      </div>
     </div>`,
     )
     .join("");
@@ -495,6 +501,15 @@ function renderAvancementForms() {
   $("view-avancement")
     .querySelectorAll("[data-bind]")
     .forEach((el) => {
+      // Initialize pretty fill for range inputs
+      if (el.type === "range") {
+        const v = Math.max(0, Math.min(100, Number(el.value) || 0));
+        el.style.setProperty("--pct", `${v}%`);
+        const slider = el.closest(".range-slider");
+        if (slider) slider.style.setProperty("--value", String(v));
+        const out = el.parentElement?.querySelector?.(".range-output");
+        if (out) out.textContent = v + "%";
+      }
       el.addEventListener("input", () => {
         const [table, key] = el.getAttribute("data-bind").split(".");
         state.data[table][key] = el.type === "range" ? +el.value : el.value;
@@ -502,6 +517,12 @@ function renderAvancementForms() {
         if (el.type === "range") {
           const lbl = el.parentElement.querySelector(".range-lbl");
           if (lbl) lbl.textContent = el.value + "%";
+          const v = Math.max(0, Math.min(100, Number(el.value) || 0));
+          el.style.setProperty("--pct", `${v}%`);
+          const slider = el.closest(".range-slider");
+          if (slider) slider.style.setProperty("--value", String(v));
+          const out = el.parentElement?.querySelector?.(".range-output");
+          if (out) out.textContent = v + "%";
         }
         markDirty();
       });
@@ -511,7 +532,11 @@ function renderAvancementForms() {
 function rangeField(label, bind, val) {
   return `<div class="form-group">
     <label class="form-label">${label} — <span class="range-lbl">${val}%</span></label>
-    <input class="form-input" type="range" min="0" max="100" data-bind="${bind}" value="${val}">
+    <div class="range-slider" style="--min:0;--max:100;--value:${Number(val) || 0}">
+      <div class="range-slider__progress" aria-hidden="true"></div>
+      <input class="form-input progress-range" type="range" min="0" max="100" data-bind="${bind}" value="${val}" style="--pct:${Number(val) || 0}%">
+      <output class="range-output">${Number(val) || 0}%</output>
+    </div>
   </div>`;
 }
 
