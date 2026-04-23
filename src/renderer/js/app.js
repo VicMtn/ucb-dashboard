@@ -95,11 +95,11 @@ function renderProjectGrid() {
           <div class="project-card-lot">${esc(p.lot || "—")}</div>
         </div>
         <div class="project-card-menu">
-          <button class="card-menu-btn" title="Renommer" onclick="event.stopPropagation();openRenameModal('${p.id}')">${icon(
+          <button class="card-menu-btn" type="button" title="Renommer" data-action="rename" data-id="${p.id}">${icon(
             "pencil-square",
             { size: 16 },
           )}</button>
-          <button class="card-menu-btn delete" title="Supprimer" onclick="event.stopPropagation();openDeleteModal('${p.id}')">${icon(
+          <button class="card-menu-btn delete" type="button" title="Supprimer" data-action="delete" data-id="${p.id}">${icon(
             "trash",
             { size: 16 },
           )}</button>
@@ -112,6 +112,19 @@ function renderProjectGrid() {
 
   grid.querySelectorAll(".project-card").forEach((card) => {
     card.addEventListener("click", () => openProject(card.dataset.id));
+  });
+
+  grid.querySelectorAll('button[data-action="rename"]').forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openRenameModal(btn.dataset.id);
+    });
+  });
+  grid.querySelectorAll('button[data-action="delete"]').forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openDeleteModal(btn.dataset.id);
+    });
   });
 }
 
@@ -864,16 +877,50 @@ async function confirmProjectModal() {
 }
 
 let _deleteId = null;
+let _deleteName = "";
+
+function normalizeForMatch(s) {
+  return String(s || "")
+    .trim()
+    .toLocaleLowerCase("fr-CH");
+}
+
+function deleteConfirmationOk() {
+  const input = $("modal-delete-input");
+  const typed = normalizeForMatch(input?.value);
+  const name = normalizeForMatch(_deleteName);
+  if (!typed || !name) return false;
+  return typed.includes(name);
+}
+
+function updateDeleteConfirmState() {
+  const btn = $("modal-delete-confirm");
+  const input = $("modal-delete-input");
+  const ok = deleteConfirmationOk();
+  if (btn) btn.disabled = !ok;
+  if (input) input.setAttribute("aria-invalid", ok ? "false" : "true");
+}
+
 function openDeleteModal(id) {
   const p = state.projects.find((x) => x.id === id);
   _deleteId = id;
+  _deleteName = p?.name || "";
   $("modal-delete-text").textContent =
     `Supprimer "${p?.name}" ? Cette action est irréversible, toutes les données seront perdues.`;
+  $("modal-delete-input").value = "";
+  updateDeleteConfirmState();
   $("modal-delete").classList.remove("hidden");
+  $("modal-delete-input").focus();
 }
 
 async function confirmDelete() {
   try {
+    if (!deleteConfirmationOk()) {
+      updateDeleteConfirmState();
+      $("modal-delete-input").focus();
+      showToast(`Veuillez saisir le nom du projet: "${_deleteName}"`, "error");
+      return;
+    }
     await window.api.projects.delete(_deleteId);
     $("modal-delete").classList.add("hidden");
     state.projects = await window.api.projects.list();
@@ -959,6 +1006,10 @@ document.addEventListener("DOMContentLoaded", () => {
   $("modal-delete-cancel").onclick = () =>
     $("modal-delete").classList.add("hidden");
   $("modal-delete-confirm").onclick = confirmDelete;
+  $("modal-delete-input").addEventListener("input", updateDeleteConfirmState);
+  $("modal-delete-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") confirmDelete();
+  });
 
   // Close modals on backdrop click
   ["modal-project", "modal-delete"].forEach((id) => {

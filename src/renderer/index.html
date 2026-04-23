@@ -154,6 +154,20 @@
           style="font-size: 13px; color: var(--gray-600); margin-bottom: 20px"
           id="modal-delete-text"
         ></p>
+        <div class="form-group">
+          <label class="form-label" id="modal-delete-confirm-label"
+            >Tapez le nom du projet pour confirmer</label
+          >
+          <input
+            class="form-input"
+            id="modal-delete-input"
+            placeholder="Nom du projet"
+            autocomplete="off"
+          />
+          <div class="modal-hint" id="modal-delete-hint">
+            Cette action est irréversible.
+          </div>
+        </div>
         <div class="modal-actions">
           <button class="btn btn-secondary" id="modal-delete-cancel">
             Annuler
