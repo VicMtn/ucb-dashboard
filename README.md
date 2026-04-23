@@ -1,18 +1,18 @@
-# PEG2BUL Dashboard
+# UCB-Automation Dashboard
 
 Application desktop de gestion de projets Automation — client lourd Electron + SQLite.
 
 ## Stack
 
-| Couche | Technologie |
-|--------|------------|
-| Desktop shell | Electron 41 |
-| Persistance | `node:sqlite` natif — zéro dépendance native, zéro compilation |
-| IPC | contextBridge (sécurisé, contextIsolation=true) |
-| UI | HTML/CSS/JS vanilla (aucun framework) |
-| Build | electron-builder (NSIS / DMG / AppImage) |
-| Observabilité | `electron-log` (fichier + console) |
-| Mises à jour | `electron-updater` (mode packagé, non disponible en dev) | 
+| Couche        | Technologie                                                    |
+| ------------- | -------------------------------------------------------------- |
+| Desktop shell | Electron 41                                                    |
+| Persistance   | `node:sqlite` natif — zéro dépendance native, zéro compilation |
+| IPC           | contextBridge (sécurisé, contextIsolation=true)                |
+| UI            | HTML/CSS/JS vanilla (aucun framework)                          |
+| Build         | electron-builder (NSIS / DMG / AppImage)                       |
+| Observabilité | `electron-log` (fichier + console)                             |
+| Mises à jour  | `electron-updater` (mode packagé, non disponible en dev)       |
 
 > **Pourquoi `node:sqlite` ?**  
 > `node:sqlite` est intégré à Node 22+ (embarqué avec Electron) et évite les dépendances natives à compiler.  
@@ -22,11 +22,11 @@ Application desktop de gestion de projets Automation — client lourd Electron +
 
 Les fichiers `.db` sont stockés dans le dossier **userData** d'Electron :
 
-| OS | Chemin |
-|----|--------|
-| Windows | `%APPDATA%\peg2bul-dashboard\projects\` |
-| macOS | `~/Library/Application Support/peg2bul-dashboard/projects/` |
-| Linux | `~/.config/peg2bul-dashboard/projects/` |
+| OS      | Chemin                                                      |
+| ------- | ----------------------------------------------------------- |
+| Windows | `%APPDATA%\peg2bul-dashboard\projects\`                     |
+| macOS   | `~/Library/Application Support/peg2bul-dashboard/projects/` |
+| Linux   | `~/.config/peg2bul-dashboard/projects/`                     |
 
 Un fichier `projects.json` dans ce même dossier sert de registry (liste des projets connus).
 
