@@ -1,8 +1,10 @@
 'use strict';
 
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const fs   = require('fs');
+const log = require('electron-log/main');
+const { autoUpdater } = require('electron-updater');
 const {
   fullSnapshot: getFullSnapshot,
   openDb: openDbCore,
@@ -11,6 +13,12 @@ const {
 } = require('./db-core');
 
 const isDev = process.argv.includes('--dev');
+const isPackaged = app.isPackaged;
+
+log.initialize();
+log.transports.file.level = 'info';
+log.transports.console.level = isDev ? 'debug' : 'info';
+log.info('[app] Démarrage', { version: app.getVersion(), isDev, isPackaged });
 
 // ─────────────────────────────────────────────
 // USER DATA DIR  →  where all .db files live
@@ -27,7 +35,7 @@ function readRegistry() {
   try {
     const parsed = JSON.parse(fs.readFileSync(REGISTRY_FILE, 'utf8'));
     if (!Array.isArray(parsed)) {
-      console.error('[registry] Format invalide: tableau attendu');
+      log.error('[registry] Format invalide: tableau attendu');
       return [];
     }
     const valid = parsed.filter(entry => {
@@ -35,11 +43,11 @@ function readRegistry() {
       return REGISTRY_REQUIRED_FIELDS.every(f => typeof entry[f] === 'string');
     });
     if (valid.length !== parsed.length) {
-      console.error(`[registry] ${parsed.length - valid.length} entrées invalides ignorées`);
+      log.error(`[registry] ${parsed.length - valid.length} entrées invalides ignorées`);
     }
     return valid;
   } catch (error) {
-    console.error('[registry] Impossible de lire projects.json', error);
+    log.error('[registry] Impossible de lire projects.json', error);
     return [];
   }
 }
@@ -57,6 +65,7 @@ function openDb(dbPath) {
   if (activeDb) { try { activeDb.close(); } catch {} }
   const db = openDbCore(dbPath);
   activeDb = db;
+  log.info('[db] Base ouverte', { dbPath });
   return db;
 }
 
@@ -72,9 +81,50 @@ function handleIpc(channel, handler) {
     try {
       return await handler(event, payload);
     } catch (error) {
-      console.error(`[ipc:${channel}]`, error);
+      log.error(`[ipc:${channel}]`, error);
       throw (error instanceof Error) ? error : new Error('Erreur interne');
     }
+  });
+}
+
+function setupCrashLogging() {
+  process.on('uncaughtException', (error) => {
+    log.error('[crash] uncaughtException', error);
+  });
+
+  process.on('unhandledRejection', (reason) => {
+    log.error('[crash] unhandledRejection', reason);
+  });
+
+  app.on('render-process-gone', (_, webContents, details) => {
+    log.error('[crash] render-process-gone', {
+      reason: details.reason,
+      exitCode: details.exitCode,
+      url: webContents.getURL(),
+    });
+  });
+
+  app.on('child-process-gone', (_, details) => {
+    log.error('[crash] child-process-gone', details);
+  });
+}
+
+function setupAutoUpdater() {
+  autoUpdater.logger = log;
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('checking-for-update', () => log.info('[updater] Vérification des mises à jour'));
+  autoUpdater.on('update-available', (info) => log.info('[updater] Mise à jour disponible', info?.version));
+  autoUpdater.on('update-not-available', () => log.info('[updater] Pas de mise à jour disponible'));
+  autoUpdater.on('download-progress', (progress) => {
+    log.info('[updater] Téléchargement en cours', `${Math.round(progress.percent)}%`);
+  });
+  autoUpdater.on('update-downloaded', (info) => {
+    log.info('[updater] Mise à jour téléchargée', info?.version);
+  });
+  autoUpdater.on('error', (error) => {
+    log.error('[updater] Erreur auto-update', error);
   });
 }
 
@@ -208,6 +258,16 @@ handleIpc('meta:update', withProjectDb((_, obj) => { upsertDbTable(activeDb, 'me
 
 // Utils
 handleIpc('shell:openDataFolder', () => shell.openPath(USER_DATA));
+handleIpc('shell:openLogsFolder', () => {
+  const logFile = log.transports.file.getFile().path;
+  return shell.openPath(path.dirname(logFile));
+});
+handleIpc('updater:check', async () => {
+  if (isDev || !isPackaged) return { skipped: true, reason: 'disabled-in-dev' };
+  const result = await autoUpdater.checkForUpdates();
+  const version = result?.updateInfo?.version || null;
+  return { skipped: false, version };
+});
 
 // ─────────────────────────────────────────────
 // WINDOW
@@ -231,10 +291,25 @@ function createWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+  mainWindow.webContents.on('did-fail-load', (_, code, desc, url) => {
+    log.error('[window] did-fail-load', { code, desc, url });
+  });
   if (isDev) mainWindow.webContents.openDevTools();
 }
 
-app.whenReady().then(createWindow);
+setupCrashLogging();
+setupAutoUpdater();
+
+app.whenReady().then(async () => {
+  createWindow();
+  if (!isDev && isPackaged) {
+    try {
+      await autoUpdater.checkForUpdatesAndNotify();
+    } catch (error) {
+      log.error('[updater] Vérification au démarrage échouée', error);
+    }
+  }
+});
 app.on('window-all-closed', () => {
   if (activeDb) try { activeDb.close(); } catch {}
   if (process.platform !== 'darwin') app.quit();
