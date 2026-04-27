@@ -451,7 +451,7 @@ function renderAvancementForms() {
 
   $("view-avancement").innerHTML = `
   <div class="main">
-    <div class="section-title">${icon("calculator", { size: 18 })} Indicateurs clés</div>
+    <div class="section-title">Indicateurs clés</div>
     <div class="card mb-20">
       <div class="form-row">
         <div class="form-group"><label class="form-label">Nombre de documents</label><input class="form-input" type="number" data-bind="kpi.docs" value="${kpi.docs}"></div>
@@ -465,7 +465,7 @@ function renderAvancementForms() {
       </div>
     </div>
 
-    <div class="section-title">${icon("cog-6-tooth", { size: 18 })} Avancement par domaine</div>
+    <div class="section-title">Avancement par domaine</div>
     <div class="card mb-20">
       <div class="form-row">
         ${rangeField("Finance", "avancement.finance", av.finance)}
@@ -977,7 +977,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setIcon("#btn-settings .icon-btn-icon", "ellipsis-horizontal", 18);
   setIcon("#btn-open-data-folder .link-icon", "folder-open", 15);
   setIcon("#btn-open-logs-folder .link-icon", "document-text", 15);
-  setIcon("#btn-check-updates .link-icon", "arrow-path", 15);
+  setIcon("#btn-check-updates .link-icon", "arrow-path-rounded-square", 15);
 
   window.addEventListener("unhandledrejection", (event) => {
     event.preventDefault();
