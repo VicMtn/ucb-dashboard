@@ -1,5 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=DM+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
+@plugin "daisyui";
 
 /* ── Custom design tokens ── */
 @theme {
@@ -24,6 +25,13 @@
 
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.07);
   --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+/* ── daisyUI theme overrides ── */
+[data-theme="light"],
+:root {
+  --color-primary: #2e6da4;
+  --color-primary-content: #ffffff;
 }
 
 /* ── Window top padding for Electron titlebar ── */
