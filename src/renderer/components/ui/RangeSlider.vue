@@ -1,9 +1,8 @@
 <template>
   <div class="mb-3.5">
-    <div class="flex items-center justify-between mb-1.5">
-      <label class="text-[11.5px] font-semibold text-gray-custom-600">{{ label }}</label>
-      <span class="text-[11.5px] font-semibold text-ucb-dark font-mono">{{ modelValue }}%</span>
-    </div>
+    <label class="block text-[11.5px] font-semibold text-gray-custom-600 mb-1.5">
+      {{ label }} — <span class="font-mono text-ucb-dark">{{ modelValue }}%</span>
+    </label>
     <input
       type="range"
       class="range range-primary range-sm"
