@@ -12,7 +12,7 @@ const {
   upsertTable: upsertDbTable,
 } = require("./db-core");
 
-const isDev = process.argv.includes("--dev");
+const isDev = !!process.env["ELECTRON_RENDERER_URL"] || process.argv.includes("--dev");
 const isPackaged = app.isPackaged;
 
 log.initialize();
@@ -506,7 +506,11 @@ function createWindow() {
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, "..", "renderer", "index.html"));
+  if (process.env["ELECTRON_RENDERER_URL"]) {
+    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
+  } else {
+    mainWindow.loadFile(path.join(__dirname, "..", "renderer", "index.html"));
+  }
   mainWindow.webContents.on("did-fail-load", (_, code, desc, url) => {
     log.error("[window] did-fail-load", { code, desc, url });
   });

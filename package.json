@@ -2,40 +2,46 @@
   "name": "peg2bul-dashboard",
   "version": "1.0.0",
   "description": "Gestion de projets Automation",
-  "main": "src/main/index.js",
+  "main": "out/main/index.js",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron . --dev",
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "start": "electron-vite preview",
     "test": "node --test",
-    "check": "node --check \"src/main/index.js\" && node --check \"src/renderer/js/app.js\"",
+    "check": "node --check \"src/main/index.js\"",
     "ci": "npm run check && npm run test",
-    "build:win": "electron-builder --win",
-    "build:mac": "electron-builder --mac",
-    "build:linux": "electron-builder --linux"
+    "build:win": "npm run build && electron-builder --win",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:linux": "npm run build && electron-builder --linux"
   },
   "build": {
     "appId": "com.ucb-automation.dashboard",
     "productName": "UCB-Automation Dashboard",
     "asar": true,
     "files": [
-      "src/**/*",
+      "out/**/*",
       "node_modules/**/*"
     ],
     "win": {
-      "target": "nsis",
-      "icon": "assets/icon.ico"
+      "target": "zip",
+      "icon": "src/assets/icon.ico"
     },
     "mac": {
       "target": "dmg",
-      "icon": "assets/icon.icns"
+      "icon": "src/assets/icon.icns"
     },
     "linux": {
       "target": "AppImage"
     }
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "@vitejs/plugin-vue": "^5.2.0",
     "electron": "^41.1.1",
-    "electron-builder": "^26.8.1"
+    "electron-builder": "^26.8.1",
+    "electron-vite": "^3.0.0",
+    "tailwindcss": "^4.1.0",
+    "vue": "^3.5.0"
   },
   "dependencies": {
     "electron-log": "^5.4.3",
