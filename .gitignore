@@ -61,4 +61,4 @@ spec/fixtures/logo.png
 .yarn/install-state.gz
 
 # Docs files
-docs/
+docs/out/
