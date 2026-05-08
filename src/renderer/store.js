@@ -34,8 +34,10 @@ export function showToast(msg, kind = 'success') {
 
 export function showErrorToast(message, error) {
   console.error(message, error)
-  const details = error ? `: ${error?.message || String(error)}` : ''
-  showToast(`${message}${details}`, 'error')
+  // error.message comes from our French throws in main; skip it when it's
+  // a raw system/Node error (has a code like ENOENT) to avoid English leaking.
+  const detail = error?.message && !error?.code ? ` : ${error.message}` : ''
+  showToast(`${message}${detail}`, 'error')
 }
 
 export function markDirty() { state.dirty = true }

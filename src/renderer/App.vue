@@ -9,8 +9,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { state, saveAll } from './actions.js'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { state, saveAll, showErrorToast } from './actions.js'
 import HomeScreen from './components/HomeScreen.vue'
 import ProjectScreen from './components/ProjectScreen.vue'
 import ProjectModal from './components/modals/ProjectModal.vue'
@@ -26,14 +26,21 @@ function onKeydown(e) {
   }
 }
 
+function onUnhandledRejection(event) {
+  event.preventDefault()
+  showErrorToast('Une erreur inattendue s\'est produite', event.reason)
+}
+
 onMounted(() => {
   const ua = navigator.userAgent || ''
   if (/\bWindows\b/i.test(ua)) osClass.value = 'os-win'
   else if (/\bMacintosh\b|\bMac OS X\b/i.test(ua)) osClass.value = 'os-mac'
   document.addEventListener('keydown', onKeydown)
+  window.addEventListener('unhandledrejection', onUnhandledRejection)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('unhandledrejection', onUnhandledRejection)
 })
 </script>
