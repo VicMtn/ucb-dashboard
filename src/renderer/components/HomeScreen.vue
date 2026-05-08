@@ -7,8 +7,8 @@
 
     <!-- Content -->
     <div
-      class="relative z-10 flex flex-col h-full overflow-hidden px-[52px] pb-10"
-      :style="{ paddingTop: `calc(40px + var(--window-top-padding))` }"
+      class="relative z-10 flex flex-col h-full overflow-hidden pr-[52px] pb-10"
+      :style="{ paddingTop: `calc(40px + var(--window-top-padding))`, paddingLeft: `calc(52px + var(--window-left-padding))` }"
     >
       <!-- Header -->
       <div class="flex items-center justify-between mb-12">

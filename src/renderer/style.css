@@ -34,12 +34,15 @@
   --color-primary-content: #ffffff;
 }
 
-/* ── Window top padding for Electron titlebar ── */
+/* ── Window padding for Electron titlebar / traffic lights ── */
 :root {
   --window-top-padding: 0px;
+  --window-left-padding: 0px;
 }
 body.os-mac {
+  /* Traffic lights (close/min/zoom) span ~70px from the left edge */
   --window-top-padding: 28px;
+  --window-left-padding: 76px;
 }
 body.os-win {
   --window-top-padding: 12px;

@@ -3,7 +3,7 @@
     <!-- Header -->
     <div
       class="bg-white border-b border-gray-custom-200 flex items-center justify-between shadow-[0_1px_8px_rgba(0,0,0,0.06)] shrink-0 header-drag"
-      :style="{ padding: `calc(10px + var(--window-top-padding)) 24px 10px` }"
+      :style="{ paddingTop: `calc(10px + var(--window-top-padding))`, paddingBottom: '10px', paddingLeft: `calc(24px + var(--window-left-padding))`, paddingRight: '24px' }"
     >
       <div class="flex items-center gap-3 header-no-drag">
         <button
